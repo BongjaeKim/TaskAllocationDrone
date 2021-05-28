@@ -1,93 +1,71 @@
 from random import *
 from math import *
+from parameters import *
 # import copy
 import matplotlib.pyplot as plt
 
-''' 모니터링 영역 파라미터 '''
-SizeOfMonitoringArea = 100
 
-''' 드론의 통신 반경 파라미터 '''
-TransRangeOfDrone = 30
+def deploy_drone_edge_cloud(temp_position_info):  # Drone 배치하고 거리에 따라서 연결 정보 갱신
+    min_value = 1
+    max_value = SizeOfMonitoringArea
+    for _ in range(NumOfDrones):
+        pos_x = randint(min_value, max_value)
+        pos_y = randint(min_value, max_value)
+        NodeXPositions.append(pos_x)
+        NodeYPositions.append(pos_y)
+        temp_position_info.append((pos_x, pos_y))
 
-''' 네트워크 토폴리지의 드론, 에지 서버, 클라우드 서버의 수 '''
-NumOfDrones = 30  # UAV의 수
-NumOfEdgeServer = 2  # 에지 서버의 수
-NumOfCloudServer = 1  # 클라우드 서버의 수
-
-''' 프로세싱 Rate 파라미터 '''
-MaxProcessingRateOfDrone = 100
-MaxProcessingRateOfEdgeServer = 500
-MaxProcessingRateOfCloudServer = 10000
-
-''' 딜레이 Factor 파라미터 '''
-MaxDelayFactorOfDrone = 1  # 드론의 딜레이 factor
-MaxDelayFactorOfEdgeServer = 5  # 에지 서버의 딜레이 factor
-MaxDelayFactorOfCloudServer = 6   # 클라우드 서버의 딜레이 factor
-
-''' 대역폭 파라미터 '''
-BandwidthOfDrone = 200  # 드론의 딜레이 factor
-BandwidthOfEdgeServer = 400  # 에지 서버의 딜레이 factor
-BandwidthOfCloudServer = 1000  # 클라우드 서버의 딜레이 factor
-
-''' 워크플로우 관련 파라미터 '''
-NumOfWorkflows = 1
-MinTasksPerWorkFlow = 5
-MaxTasksPerWorkflow = 10
-MinRequiredProcessingPower = 50
-MaxRequiredProcessingPower = 1000
-MinRequiredBandwidth = 50
-MaxRequiredBandwidth = 200
-
-DronesXPositions = []  # 그래프로 드론의 위치를 표기하기 위한 드론의 X좌표 배열
-DronesYPositions = []  # 그래프로 드론의 위치를 표기하기 위한 드론의 Y좌표 배열
-
-MAX_MATRIX_INDEX = NumOfDrones + NumOfEdgeServer + NumOfCloudServer  # 네트워크 연결 정보 저장 테이블의 최대 인덱스
-
-ConnectionInfo = [[0 for _ in range(MAX_MATRIX_INDEX + 1)] for __ in range(MAX_MATRIX_INDEX + 1)]  # 네트워크 연결 정보 초기화
-
-DronesPositionInfo = [(0, 0), ]  # 드론들의 위치 정보 저장
-
-ProcessingRateOfDEC = [0, ]  # 각 드론, 에지서버, 클라우드 서버의 프로세싱 rate 저장
-
-DelayFactorOfDEC = [0, ]  # 각 드론, 에지서버, 클라우드 서버의 딜레이 factor 저장
-
-BandwidthOfDEC = [0, ]  # 각 드드 론, 에지서버, 클라우서버의 대역폭 저장
-
-WorkflowInfo = [0, ]  # sequential 워크플로우 정보 저장
-
-
-def deploy_drone(temp_drones_position_info):  # Drone 배치하고 거리에 따라서 연결 정보 갱신
-    for i in range(NumOfDrones):
-        pos_x = randint(1, SizeOfMonitoringArea)
+    min_value = SizeOfMonitoringArea + 1
+    max_value = SizeOfMonitoringArea + EdgeServerArea
+    for _ in range(NumOfEdgeServer):
+        pos_x = randint(min_value, max_value)
         pos_y = randint(1, SizeOfMonitoringArea)
-        DronesXPositions.append(pos_x)
-        DronesYPositions.append(pos_y)
-        temp_drones_position_info.append((pos_x, pos_y))
-    print(len(temp_drones_position_info))
-    print(temp_drones_position_info)
+        NodeXPositions.append(pos_x)
+        NodeYPositions.append(pos_y)
+        temp_position_info.append((pos_x, pos_y))
+
+    min_value = SizeOfMonitoringArea + EdgeServerArea + 1
+    max_value = SizeOfMonitoringArea + EdgeServerArea + CloudServerArea
+    for _ in range(NumOfCloudServer):
+        pos_x = randint(min_value, max_value)
+        pos_y = randint(1, SizeOfMonitoringArea)
+        NodeXPositions.append(pos_x)
+        NodeYPositions.append(pos_y)
+        temp_position_info.append((pos_x, pos_y))
+    print(len(temp_position_info))
+    print(temp_position_info)
 
 
-def update_connection_info_d2d(temp_connection_info, temp_drones_position_info):  # 네트워크 연결 정보 설정(에지 서버와 클라우드 서버)
+def update_connection_info_d2d(temp_connection_info, temp_node_position_info):  # 네트워크 연결 정보 설정(에지 서버와 클라우드 서버)
     num_connection = 0
     for index1 in range(1, NumOfDrones):
         for index2 in range(index1 + 1, NumOfDrones + 1):
-            distance_x = abs(temp_drones_position_info[index1][0] - temp_drones_position_info[index2][0])
-            distance_y = abs(temp_drones_position_info[index1][1] - temp_drones_position_info[index2][1])
+            distance_x = abs(temp_node_position_info[index1][0] - temp_node_position_info[index2][0])
+            distance_y = abs(temp_node_position_info[index1][1] - temp_node_position_info[index2][1])
             if sqrt(distance_x**2 + distance_y**2) <= TransRangeOfDrone:
                 # print("Can connect each other")
                 num_connection += 1
                 temp_connection_info[index1][index2] = 1
                 temp_connection_info[index2][index1] = 1
-                plt.plot([temp_drones_position_info[index1][0], temp_drones_position_info[index2][0]],
-                         [temp_drones_position_info[index1][1], temp_drones_position_info[index2][1]], color="green")
-    print("The Number of Total Connection", num_connection)
+                plt.plot([temp_node_position_info[index1][0], temp_node_position_info[index2][0]],
+                         [temp_node_position_info[index1][1], temp_node_position_info[index2][1]], color="green")
+    if True:
+        for index1 in range(1, NumOfDrones):
+            for index2 in range(NumOfDrones + 1, NumOfDrones + NumOfEdgeServer + 1):
+                temp_connection_info[index1][index2] = 1
+                temp_connection_info[index2][index1] = 1
+                # plt.plot([temp_node_position_info[index1][0], temp_node_position_info[index2][0]],
+                #          [temp_node_position_info[index1][1], temp_node_position_info[index2][1]], color="black")
+    print("[DBG]", "The Number of Total Connection", num_connection)
 
 
-def update_connection_info_e2c(temp_connection_info):  # 네트워크 연결 정보 설정(에지 서버와 클라우드 서버)
+def update_connection_info_e2c(temp_connection_info, temp_node_position_info):  # 네트워크 연결 정보 설정(에지 서버와 클라우드 서버)
     for index1 in range(NumOfDrones + 1, NumOfDrones + NumOfEdgeServer + 1):
         for index2 in range(NumOfDrones + NumOfEdgeServer + 1, MAX_MATRIX_INDEX + 1):
             temp_connection_info[index1][index2] = 1
             temp_connection_info[index2][index1] = 1
+            plt.plot([temp_node_position_info[index1][0], temp_node_position_info[index2][0]],
+                     [temp_node_position_info[index1][1], temp_node_position_info[index2][1]], color="black")
 
 
 def display_connection_info(temp_connection_info):  # 현재 내트워크 연결 정보 출력
@@ -128,42 +106,57 @@ def make_workflows(temp_workflow_info):
 
 def allocate_workflows_to_topology(cur_connection_info, workflow, start_node, cur_node, cur_task, visited_node):
     if cur_task == len(workflow):
-        print("[DBG]", "No of Tasks: ", cur_task, ", Found allocatable case: ", visited_node)
+        print("[DBG]", "No of Tasks:", cur_task, ", Found allocatable case:", visited_node)
         return True
 
     for index in range(1, MAX_MATRIX_INDEX + 1):
         if index != cur_node:
             if cur_connection_info[cur_node][index] != 0 and index not in visited_node:
-                if start_node == cur_node:
-                    visited_node.append(cur_node)
                 visited_node.append(index)
-                ret_value = allocate_workflows_to_topology(cur_connection_info, workflow, start_node, index, cur_task + 1, visited_node)
+                ret_value = allocate_workflows_to_topology(cur_connection_info,
+                                                           workflow, start_node, index, cur_task + 1, visited_node)
                 if ret_value is True:
                     return True
 
 
-def add_candidate_deployment(temp_drones_position_info, temp_visited_node_info):  # 네트워크 연결 정보 설정(에지 서버와 클라우드 서버)
-    for index1 in range(len(temp_visited_node_info)-1):
-        plt.plot([temp_drones_position_info[temp_visited_node_info[index1]][0], temp_drones_position_info[temp_visited_node_info[index1+1]][0]],
-                 [temp_drones_position_info[temp_visited_node_info[index1]][1], temp_drones_position_info[temp_visited_node_info[index1+1]][1]], color="black")
+def add_candidate_deployment(temp_node_position_info, temp_visited_node_info):  # 워크플로우 할당 현황 표시
+    r = random()
+    b = random()
+    g = random()
+    generated_color = (r, g, b)
+    num_of_total_visited_node = len(temp_visited_node_info)
+    for index1 in range(num_of_total_visited_node - 1):
+        start_node_index = temp_visited_node_info[index1]
+        end_node_index = temp_visited_node_info[index1 + 1]
+        plt.plot([temp_node_position_info[start_node_index][0], temp_node_position_info[end_node_index][0]],
+                 [temp_node_position_info[start_node_index][1], temp_node_position_info[end_node_index][1]],
+                 color=generated_color)
 
+deploy_drone_edge_cloud(NodePositionInfo)  # 드론(UAV), 에지, 클라우드를 모니터링 대상 영역에 배치
 
-update_connection_info_e2c(ConnectionInfo)  # 에지 서버와 클라우드 서버간의 연결 정보 생성
-deploy_drone(DronesPositionInfo)  # 드론(UAV)를 모니터링 대상 영역에 배치
-update_connection_info_d2d(ConnectionInfo, DronesPositionInfo)  # 드론간의 토폴로지 생성
+update_connection_info_e2c(ConnectionInfo, NodePositionInfo)  # 에지 서버와 클라우드 서버간의 연결 정보 생성
+
+update_connection_info_d2d(ConnectionInfo, NodePositionInfo)  # 드론간의 토폴로지 생성
+
 alloc_processing_power(ProcessingRateOfDEC)  # 드론, 에지 서버, 클라우드 서버의 프로세싱 rate 초기화
+
 alloc_delay_factor(DelayFactorOfDEC)  # 드론, 에지 서버, 클라우드 서버의 프로세싱 rate 초기화
+
 display_connection_info(ConnectionInfo)  # 전체 토폴로지 연결 정보 표시
+
 make_workflows(WorkflowInfo)  # workflow를 생성
 
-
-Rnd_Start_Node = randint(1, MAX_MATRIX_INDEX)
-Visited_Node_Info = []
-Condition = False
-allocate_workflows_to_topology(ConnectionInfo, WorkflowInfo[1], start_node=Rnd_Start_Node, cur_node=Rnd_Start_Node, cur_task=1, visited_node=Visited_Node_Info)
-print(Visited_Node_Info)
-
-add_candidate_deployment(DronesPositionInfo, Visited_Node_Info)
+for i in range(1, NumOfWorkflows + 1):
+    Rnd_Start_Node = randint(1, MAX_MATRIX_INDEX)
+    Visited_Node_Info = [Rnd_Start_Node]
+    print("[DBG]", "Visited node info.:", Visited_Node_Info)
+    Condition = False
+    ret_value = allocate_workflows_to_topology(ConnectionInfo, WorkflowInfo[i],
+                                               start_node=Rnd_Start_Node, cur_node=Rnd_Start_Node, cur_task=1,
+                                               visited_node=Visited_Node_Info)
+    print(Visited_Node_Info)
+    if ret_value is True:
+        add_candidate_deployment(NodePositionInfo, Visited_Node_Info)
 
 print(WorkflowInfo)
 print(len(WorkflowInfo))
@@ -176,5 +169,10 @@ test = copy.deepcopy(DelayFactorOfDEC)
 '''
 
 # 드론들의 배치 상황과 연결 상황을 그래프로 표시
-plt.scatter(DronesXPositions, DronesYPositions)
+plt.scatter(NodeXPositions[1:NumOfDrones + 1], NodeYPositions[1:NumOfDrones + 1], edgecolors="blue", s=30)
+plt.scatter(NodeXPositions[NumOfDrones + 1:NumOfDrones + NumOfEdgeServer + 1], NodeYPositions[NumOfDrones + 1:NumOfDrones + NumOfEdgeServer + 1], edgecolors="black", s=80)
+plt.scatter(NodeXPositions[NumOfDrones + NumOfEdgeServer + 1:], NodeYPositions[NumOfDrones + NumOfEdgeServer + 1:], edgecolors="red", s=150)
+plt.fill_between([1, SizeOfMonitoringArea], [SizeOfMonitoringArea, SizeOfMonitoringArea], alpha=0.1)
+plt.fill_between([SizeOfMonitoringArea, SizeOfMonitoringArea + EdgeServerArea], [SizeOfMonitoringArea, SizeOfMonitoringArea], alpha=0.2)
+plt.fill_between([SizeOfMonitoringArea + EdgeServerArea, SizeOfMonitoringArea + EdgeServerArea + CloudServerArea], [SizeOfMonitoringArea, SizeOfMonitoringArea], alpha=0.1)
 plt.show()
