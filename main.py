@@ -113,9 +113,9 @@ def allocate_workflows_to_topology(cur_connection_info, workflow, start_node, cu
         if index != cur_node:
             if cur_connection_info[cur_node][index] != 0 and index not in visited_node:
                 visited_node.append(index)
-                ret_value = allocate_workflows_to_topology(cur_connection_info,
-                                                           workflow, start_node, index, cur_task + 1, visited_node)
-                if ret_value is True:
+                ret = allocate_workflows_to_topology(cur_connection_info,
+                                                     workflow, start_node, index, cur_task + 1, visited_node)
+                if ret is True:
                     return True
 
 
@@ -132,6 +132,7 @@ def add_candidate_deployment(temp_node_position_info, temp_visited_node_info):  
                  [temp_node_position_info[start_node_index][1], temp_node_position_info[end_node_index][1]],
                  color=generated_color)
 
+
 deploy_drone_edge_cloud(NodePositionInfo)  # 드론(UAV), 에지, 클라우드를 모니터링 대상 영역에 배치
 
 update_connection_info_e2c(ConnectionInfo, NodePositionInfo)  # 에지 서버와 클라우드 서버간의 연결 정보 생성
@@ -144,7 +145,7 @@ alloc_delay_factor(DelayFactorOfDEC)  # 드론, 에지 서버, 클라우드 서�
 
 display_connection_info(ConnectionInfo)  # 전체 토폴로지 연결 정보 표시
 
-make_workflows(WorkflowInfo)  # workflow를 생성
+make_workflows(WorkflowInfo)  # workflow 를 생성
 
 for i in range(1, NumOfWorkflows + 1):
     Rnd_Start_Node = randint(1, MAX_MATRIX_INDEX)
@@ -170,9 +171,14 @@ test = copy.deepcopy(DelayFactorOfDEC)
 
 # 드론들의 배치 상황과 연결 상황을 그래프로 표시
 plt.scatter(NodeXPositions[1:NumOfDrones + 1], NodeYPositions[1:NumOfDrones + 1], edgecolors="blue", s=30)
-plt.scatter(NodeXPositions[NumOfDrones + 1:NumOfDrones + NumOfEdgeServer + 1], NodeYPositions[NumOfDrones + 1:NumOfDrones + NumOfEdgeServer + 1], edgecolors="black", s=80)
-plt.scatter(NodeXPositions[NumOfDrones + NumOfEdgeServer + 1:], NodeYPositions[NumOfDrones + NumOfEdgeServer + 1:], edgecolors="red", s=150)
-plt.fill_between([1, SizeOfMonitoringArea], [SizeOfMonitoringArea, SizeOfMonitoringArea], alpha=0.1)
-plt.fill_between([SizeOfMonitoringArea, SizeOfMonitoringArea + EdgeServerArea], [SizeOfMonitoringArea, SizeOfMonitoringArea], alpha=0.2)
-plt.fill_between([SizeOfMonitoringArea + EdgeServerArea, SizeOfMonitoringArea + EdgeServerArea + CloudServerArea], [SizeOfMonitoringArea, SizeOfMonitoringArea], alpha=0.1)
+plt.scatter(NodeXPositions[NumOfDrones + 1:NumOfDrones + NumOfEdgeServer + 1],
+            NodeYPositions[NumOfDrones + 1:NumOfDrones + NumOfEdgeServer + 1], edgecolors="black", s=80)
+plt.scatter(NodeXPositions[NumOfDrones + NumOfEdgeServer + 1:],
+            NodeYPositions[NumOfDrones + NumOfEdgeServer + 1:], edgecolors="red", s=150)
+plt.fill_between([1, SizeOfMonitoringArea],
+                 [SizeOfMonitoringArea, SizeOfMonitoringArea], alpha=0.1)
+plt.fill_between([SizeOfMonitoringArea, SizeOfMonitoringArea + EdgeServerArea],
+                 [SizeOfMonitoringArea, SizeOfMonitoringArea], alpha=0.2)
+plt.fill_between([SizeOfMonitoringArea + EdgeServerArea, SizeOfMonitoringArea + EdgeServerArea + CloudServerArea],
+                 [SizeOfMonitoringArea, SizeOfMonitoringArea], alpha=0.1)
 plt.show()
