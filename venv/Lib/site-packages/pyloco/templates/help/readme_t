@@ -1,0 +1,33 @@
+===============================================================
+__{name}__ __{type}__
+===============================================================
+
+version: __{version}__
+
+__{short description}__
+
+__{long description}__
+
+Installation
+-------------
+
+__{installation}__
+
+Usage
+-------------
+
+__{usage}__
+
+Contributing
+-------------
+
+__{contributing}__
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+Please make sure to update tests as appropriate.
+
+License
+-------------
+
+__{license}__

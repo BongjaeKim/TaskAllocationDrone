@@ -1,0 +1,3 @@
+[pyloco.task]
+matplot = matplot:entry_task
+

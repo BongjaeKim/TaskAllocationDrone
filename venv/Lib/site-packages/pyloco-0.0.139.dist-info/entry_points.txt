@@ -1,0 +1,3 @@
+[console_scripts]
+pyloco = pyloco.__main__:main
+
