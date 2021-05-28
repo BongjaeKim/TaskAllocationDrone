@@ -49,7 +49,7 @@ def update_connection_info_d2d(temp_connection_info, temp_node_position_info):  
                 temp_connection_info[index2][index1] = 1
                 plt.plot([temp_node_position_info[index1][0], temp_node_position_info[index2][0]],
                          [temp_node_position_info[index1][1], temp_node_position_info[index2][1]], color="green")
-    if True:
+    if True:  # 드론과 에지 서버와의 통신 가능 설정(4G, LTE 등과 같은 기법으로 1-Hop 통신이 가능하다고 가정)
         for index1 in range(1, NumOfDrones):
             for index2 in range(NumOfDrones + 1, NumOfDrones + NumOfEdgeServer + 1):
                 temp_connection_info[index1][index2] = 1
