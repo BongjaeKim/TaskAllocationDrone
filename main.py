@@ -1,7 +1,8 @@
 from random import *
 from math import *
 from parameters import *
-# import copy
+from chromosome import *
+import copy
 import matplotlib.pyplot as plt
 
 
@@ -75,7 +76,7 @@ def display_connection_info(temp_connection_info):  # 현재 내트워크 연결
         print()
 
 
-def alloc_processing_power(temp_processing_rate_of_dec):
+def alloc_processing_power(temp_processing_rate_of_dec):  # 프로세싱 파워 초기화
     for _ in range(0, NumOfDrones):
         temp_processing_rate_of_dec.append(MaxProcessingRateOfDrone)
     for _ in range(0, NumOfEdgeServer):
@@ -84,7 +85,7 @@ def alloc_processing_power(temp_processing_rate_of_dec):
         temp_processing_rate_of_dec.append(MaxProcessingRateOfCloudServer)
 
 
-def alloc_delay_factor(temp_delay_factor_of_dec):
+def alloc_delay_factor(temp_delay_factor_of_dec):  # 딜레이 factor 초기화
     for _ in range(0, NumOfDrones):
         temp_delay_factor_of_dec.append(MaxDelayFactorOfDrone)
     for _ in range(0, NumOfEdgeServer):
@@ -93,7 +94,7 @@ def alloc_delay_factor(temp_delay_factor_of_dec):
         temp_delay_factor_of_dec.append(MaxDelayFactorOfCloudServer)
 
 
-def alloc_bandwidth(temp_alloc_bandwidth_of_dec):
+def alloc_bandwidth(temp_alloc_bandwidth_of_dec):  # 대역폭 초기화
     for _ in range(0, NumOfDrones):
         temp_alloc_bandwidth_of_dec.append(BandwidthOfDrone)
     for _ in range(0, NumOfEdgeServer):
@@ -128,19 +129,20 @@ def allocate_workflows_to_topology(cur_connection_info, workflow, start_node, cu
                     return True
 
 
-def set_resource_usage_on_topology(temp_visited_node_info, temp_workflow):
+def set_resource_usage_on_topology(temp_chromosome, temp_visited_node_info, temp_workflow):
     for index in range(len(temp_visited_node_info)):
-        ProcessingRateOfDEC[temp_visited_node_info[index]] -= temp_workflow[index][1]
-        BandwidthOfDEC[temp_visited_node_info[index]] -= temp_workflow[index][2]
+        temp_chromosome.processing_rate_of_dec[temp_visited_node_info[index]] -= temp_workflow[index][1]
+        temp_chromosome.bandwidth_of_dec[temp_visited_node_info[index]] -= temp_workflow[index][2]
 
-def allocate_workflows_to_topology_with_constraint(cur_connection_info, workflow, start_node,
+
+def allocate_workflows_to_topology_with_constraint(temp_chromosome, cur_connection_info, workflow, start_node,
                                                    cur_node, cur_task, visited_node):
     if cur_task == len(workflow):
         # check remained resources at current checking node
         # a workflow is consist of ( task number, required_processing_power, required_bandwidth )
         # print("[DBG]", "current node is", cur_node)
-        if ProcessingRateOfDEC[cur_node] > workflow[cur_task - 1][1] and \
-                BandwidthOfDEC[cur_node] > workflow[cur_task - 1][2]:
+        if temp_chromosome.processing_rate_of_dec[cur_node] > workflow[cur_task - 1][1] and \
+                temp_chromosome.bandwidth_of_dec[cur_node] > workflow[cur_task - 1][2]:
             print("[DBG]", "No of Tasks:", cur_task, ", Found allocatable case:", visited_node)
             return True
         else:
@@ -152,22 +154,25 @@ def allocate_workflows_to_topology_with_constraint(cur_connection_info, workflow
                     next_node not in visited_node:
                 # check remained resources at current checking node
                 # a workflow is consist of ( task number, required_processing_power, required_bandwidth )
-                if ProcessingRateOfDEC[cur_node] > workflow[cur_task - 1][1] and \
-                        BandwidthOfDEC[cur_node] > workflow[cur_task - 1][2]:
+                if temp_chromosome.processing_rate_of_dec[cur_node] > workflow[cur_task - 1][1] and \
+                        temp_chromosome.bandwidth_of_dec[cur_node] > workflow[cur_task - 1][2]:
                     visited_node.append(next_node)
-                    ret = allocate_workflows_to_topology_with_constraint(cur_connection_info, workflow, start_node,
-                                                                         next_node, cur_task + 1, visited_node)
+                    ret = allocate_workflows_to_topology_with_constraint(temp_chromosome, cur_connection_info,
+                                                                         workflow, start_node, next_node,
+                                                                         cur_task + 1, visited_node)
                     if ret is True:
                         return True
                     else:
                         return False
-                else:
-                    return False
+
+    return False
+
 
 def display_deployed_workflow(temp_deployed_status_of_workflows):
     for index in range(1, len(temp_deployed_status_of_workflows)):
-        if temp_deployed_status_of_workflows[index][0] is True:
-            print("[DBG]", temp_deployed_status_of_workflows[index][1])
+        if temp_deployed_status_of_workflows[index][1] is True:
+            print("[DBG]", "Deployed workflow No =", temp_deployed_status_of_workflows[index][0],
+                  temp_deployed_status_of_workflows[index][2])
 
 
 def add_candidate_deployment(temp_node_position_info, temp_visited_node_info):  # 워크플로우 할당 현황 표시
@@ -182,6 +187,39 @@ def add_candidate_deployment(temp_node_position_info, temp_visited_node_info):  
         plt.plot([temp_node_position_info[start_node_index][0], temp_node_position_info[end_node_index][0]],
                  [temp_node_position_info[start_node_index][1], temp_node_position_info[end_node_index][1]],
                  color=generated_color)
+
+
+def make_chromosome(temp_chromosome):
+    # 램덤 방식일 이용하여 각 워크플로우를 할당
+    num_of_deployed_workflow = 0
+    for i in range(1, NumOfWorkflows + 1):
+        rnd_start_node = randint(1, MAX_MATRIX_INDEX)
+        visited_node_info = [rnd_start_node]
+        print("[DBG]", "Initial starting node info.:", visited_node_info)
+
+        ret_value = allocate_workflows_to_topology_with_constraint(temp_chromosome, ConnectionInfo, WorkflowInfo[i],
+                                                                   start_node=rnd_start_node, cur_node=rnd_start_node,
+                                                                   cur_task=1,
+                                                                   visited_node=visited_node_info)
+
+        '''
+        ret_value = allocate_workflows_to_topology(ConnectionInfo, WorkflowInfo[i],
+                                                   start_node=Rnd_Start_Node, cur_node=Rnd_Start_Node, cur_task=1,
+                                                   visited_node=Visited_Node_Info)
+        '''
+        print(visited_node_info)  # 워크플로우가 배치된 노트 정보 출력
+
+        if ret_value is True:
+            temp_chromosome.workflow_status.append((i, True, visited_node_info))
+            num_of_deployed_workflow += 1
+            ''' 실제 토폴로지에서 리소스 사용(프로세싱 파워, 대역폭) 을 반영시킴 '''
+            set_resource_usage_on_topology(temp_chromosome, visited_node_info, WorkflowInfo[i])
+            add_candidate_deployment(NodePositionInfo, visited_node_info)  # 가시화를 위한 워크플로우의 배치 정보 추가
+        else:
+            temp_chromosome.workflow_status.append((i, False, [0, ]))
+            print("[DBG]", "current workflow is not allocated")
+
+    print("[DBG]", "# of allocated workflow = ", num_of_deployed_workflow)
 
 
 deploy_drone_edge_cloud(NodePositionInfo)  # 드론(UAV), 에지, 클라우드를 모니터링 대상 영역에 배치
@@ -200,50 +238,15 @@ display_connection_info(ConnectionInfo)  # 전체 토폴로지 연결 정보 표
 
 make_workflows(WorkflowInfo)  # workflow 를 생성
 
-# 램덤 방식일 이용하여 각 워크플로우를 할당
-SuccessNumber = 0
-for i in range(1, NumOfWorkflows + 1):
-    Rnd_Start_Node = randint(1, MAX_MATRIX_INDEX)
-    Visited_Node_Info = [Rnd_Start_Node]
-    print("[DBG]", "Initial starting node info.:", Visited_Node_Info)
-    Condition = False
+for _ in range(10):
+    sample_chromosome = Chromosome(copy.deepcopy(ProcessingRateOfDEC),
+                                   copy.deepcopy(BandwidthOfDEC),
+                                   copy.deepcopy(DelayFactorOfDEC))
+    make_chromosome(sample_chromosome)  # 샘플 크로모좀 생성
+    display_deployed_workflow(sample_chromosome.workflow_status)
 
-    ret_value = allocate_workflows_to_topology_with_constraint(ConnectionInfo, WorkflowInfo[i],
-                                                               start_node=Rnd_Start_Node, cur_node=Rnd_Start_Node,
-                                                               cur_task=1,
-                                                               visited_node=Visited_Node_Info)
-
-    '''
-    ret_value = allocate_workflows_to_topology(ConnectionInfo, WorkflowInfo[i],
-                                               start_node=Rnd_Start_Node, cur_node=Rnd_Start_Node, cur_task=1,
-                                               visited_node=Visited_Node_Info)
-    '''
-    print(Visited_Node_Info)  # 워크플로우가 배치된 노트 정보 출력
-    
-    if ret_value is True:
-        DeployedStatusOfWorkflows.append((True, Visited_Node_Info))
-        SuccessNumber += 1
-        set_resource_usage_on_topology(Visited_Node_Info, WorkflowInfo[i])  # 실제 토폴로지에서 리소스 사용을 반영시킴
-        add_candidate_deployment(NodePositionInfo, Visited_Node_Info)  # 가시화를 위한 워크플로우의 배치 정보 추가
-    else:
-        DeployedStatusOfWorkflows.append((False, [0,]))
-        print("[DBG]", "current workflow is not allocated")
-
-print("[DBG]", "# of allocated workflow = ", SuccessNumber)
-
-display_deployed_workflow(DeployedStatusOfWorkflows)
-
-'''
-print(WorkflowInfo)
-print(len(WorkflowInfo))
-'''
-
-# print(DelayFactorOfDEC)
-# print(len(DelayFactorOfDEC))
-
-''' deep copy sample code 
-test = copy.deepcopy(DelayFactorOfDEC)
-'''
+# print(WorkflowInfo)
+# print(len(WorkflowInfo))
 
 # 드론들의 배치 상황과 연결 상황을 그래프로 표시
 plt.scatter(NodeXPositions[1:NumOfDrones + 1], NodeYPositions[1:NumOfDrones + 1], edgecolors="blue", s=30)
