@@ -221,6 +221,25 @@ def make_chromosome(temp_chromosome):
 
     print("[DBG]", "# of allocated workflow = ", num_of_deployed_workflow)
 
+def calculate_performance_chromosome(temp_chromosome):
+    # 각 크로모좀의 성능 계산
+    total_allocated_processing_power = 0.0
+    total_allocated_bandwidth = 0.0
+    total_allocated_delay_factor = 0.0
+
+    for i in range(1, len(temp_chromosome.workflow_status)):
+        (workflow_id, workflow_status, allocated_node) = temp_chromosome.workflow_status[i]
+        if workflow_status == True:
+            for (task_id, required_processing_power, required_bandwidth) in WorkflowInfo[workflow_id]:
+                if task_id >= 0:
+                    total_allocated_processing_power += required_processing_power
+                    total_allocated_bandwidth += required_bandwidth
+            for node_id in allocated_node:
+                total_allocated_delay_factor += DelayFactorOfDEC[node_id]
+
+    print(total_allocated_processing_power, total_allocated_bandwidth, total_allocated_delay_factor)
+    return ()
+
 
 deploy_drone_edge_cloud(NodePositionInfo)  # 드론(UAV), 에지, 클라우드를 모니터링 대상 영역에 배치
 
@@ -238,11 +257,15 @@ display_connection_info(ConnectionInfo)  # 전체 토폴로지 연결 정보 표
 
 make_workflows(WorkflowInfo)  # workflow 를 생성
 
+''' Population 생성 '''
+Population = list()
 for _ in range(10):
     sample_chromosome = Chromosome(copy.deepcopy(ProcessingRateOfDEC),
                                    copy.deepcopy(BandwidthOfDEC),
                                    copy.deepcopy(DelayFactorOfDEC))
     make_chromosome(sample_chromosome)  # 샘플 크로모좀 생성
+    calculate_performance_chromosome(sample_chromosome)
+    Population.append(sample_chromosome)
     display_deployed_workflow(sample_chromosome.workflow_status)
 
 # print(WorkflowInfo)

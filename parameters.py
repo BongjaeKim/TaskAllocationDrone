@@ -1,4 +1,3 @@
-''' 모니터링 영역 파라미터 '''
 SizeOfMonitoringArea = 100  # 드론이 모니터링하는 영역의 크기 (기본: 100)
 
 ''' 에지 서버 영역 파라미터 '''
@@ -31,7 +30,7 @@ BandwidthOfEdgeServer = 400  # 에지 서버의 대역폭 (기본: 400)
 BandwidthOfCloudServer = 1000  # 클라우드 서버의 대역폭 (기본: 1000)
 
 ''' 워크플로우 관련 파라미터 '''
-NumOfWorkflows = 20 # 워크플로우 수 (기본: 4)
+NumOfWorkflows = 20  # 워크플로우 수 (기본: 4)
 MinTasksPerWorkFlow = 4  # 하나의 워크플로우의 최소 태스크 수 (기본: 4)
 MaxTasksPerWorkflow = 4  # 하나의 워크플로우의 최대 태스크 수 (기본: 4)
 MinRequiredProcessingPower = 20  # 각 태스크의 최소 소모 프로세싱 파워 (기본: 50)
@@ -57,5 +56,3 @@ BandwidthOfDEC = [0, ]  # 각 드론, 에지서버, 클라우서버의 대역폭
 WorkflowInfo = [0, ]  # sequential 워크플로우 정보 저장 [(태스크 번호, 프로세싱 요구량, 대역폭요구량), ...]
 
 DeployedStatusOfWorkflows = [0, ]  # 각 워크플로우의 배치 여부
-
-Chromosome = []
