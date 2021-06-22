@@ -221,6 +221,7 @@ def make_chromosome(temp_chromosome):
 
     print("[DBG]", "# of allocated workflow = ", num_of_deployed_workflow)
 
+
 def calculate_performance_chromosome(temp_chromosome):
     # 각 크로모좀의 성능 계산
     total_allocated_processing_power = 0.0
@@ -229,7 +230,7 @@ def calculate_performance_chromosome(temp_chromosome):
 
     for i in range(1, len(temp_chromosome.workflow_status)):
         (workflow_id, workflow_status, allocated_node) = temp_chromosome.workflow_status[i]
-        if workflow_status == True:
+        if workflow_status is True:
             for (task_id, required_processing_power, required_bandwidth) in WorkflowInfo[workflow_id]:
                 if task_id >= 0:
                     total_allocated_processing_power += required_processing_power
@@ -259,7 +260,7 @@ make_workflows(WorkflowInfo)  # workflow 를 생성
 
 ''' Population 생성 '''
 Population = list()
-for _ in range(10):
+for _ in range(20):
     sample_chromosome = Chromosome(copy.deepcopy(ProcessingRateOfDEC),
                                    copy.deepcopy(BandwidthOfDEC),
                                    copy.deepcopy(DelayFactorOfDEC))
