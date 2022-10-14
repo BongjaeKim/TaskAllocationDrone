@@ -9,3 +9,4 @@ Our scheme can deploy multiple workflow onto the drone based IoT network infrast
     * Assistant Professor, Ph.D.
     * Department of Computer Engineering, Chungbuk National University
     * bjkim@chungbuk.ac.kr
+- Junhyouk Jang
