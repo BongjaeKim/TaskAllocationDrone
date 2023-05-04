@@ -6,7 +6,7 @@ Our scheme can deploy multiple workflow onto the drone based IoT network infrast
 
 # Copyright by Bongjae Kim et al
 - Bongjae Kim
-    * Assistant Professor, Ph.D.
+    * Associate Professor, Ph.D.
     * Department of Computer Engineering, Chungbuk National University
     * bjkim@chungbuk.ac.kr
 - Junhyouk Jang
